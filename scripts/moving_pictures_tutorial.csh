@@ -67,8 +67,8 @@ qiime dada2 denoise-single \
 qiime metadata tabulate \
   --m-input-file ${OUTPUT}/stats-dada2.qza \
   --o-visualization ${OUTPUT}/stats-dada2.qzv
-mv rep-seqs-dada2.qza ${OUTPUT}/rep-seqs.qza
-mv table-dada2.qza ${OUTPUT}/table.qza
+mv ${OUTPUT}/rep-seqs-dada2.qza ${OUTPUT}/rep-seqs.qza
+mv ${OUTPUT}/table-dada2.qza ${OUTPUT}/table.qza
 qiime feature-table summarize \
   --i-table ${OUTPUT}/table.qza \
   --o-visualization ${OUTPUT}/table.qzv \
