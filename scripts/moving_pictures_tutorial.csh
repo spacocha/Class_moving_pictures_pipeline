@@ -1,5 +1,26 @@
+#!/bin/sh
+#
+##SBATCH --job-name=moving_pictures
+#SBATCH --time=72:00:00
+#SBATCH --ntasks=5
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=shared
+
+
+#load qiime module
+module load qiime2/2018.8
+
+export TMPDIR='/scratch/users/t-sprehei1@jhu.edu/tmp'
+
+echo "Beginning QIIME"
+date
+
 mkdir qiime2-moving-pictures-tutorial
 cd qiime2-moving-pictures-tutorial
+
+echo "Getting data"
+date 
+
 wget \
   -O "sample-metadata.tsv" \
   "https://data.qiime2.org/2018.8/tutorials/moving-pictures/sample_metadata.tsv"
@@ -10,19 +31,31 @@ wget \
 wget \
   -O "emp-single-end-sequences/sequences.fastq.gz" \
   "https://data.qiime2.org/2018.8/tutorials/moving-pictures/emp-single-end-sequences/sequences.fastq.gz"
+
+echo "Importing data"
+date
+
 qiime tools import \
   --type EMPSingleEndSequences \
   --input-path emp-single-end-sequences \
   --output-path emp-single-end-sequences.qza
+
+echo "Demuxing"
+date
+
 qiime demux emp-single \
   --i-seqs emp-single-end-sequences.qza \
   --m-barcodes-file sample-metadata.tsv \
   --m-barcodes-column BarcodeSequence \
   --o-per-sample-sequences demux.qza
+
 qiime demux summarize \
   --i-data demux.qza \
   --o-visualization demux.qzv
-qiime tools view demux.qzv
+
+echo "Starting DADA2"
+date
+
 qiime dada2 denoise-single \
   --i-demultiplexed-seqs demux.qza \
   --p-trim-left 0 \
@@ -42,6 +75,10 @@ qiime feature-table summarize \
 qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
   --o-visualization rep-seqs.qzv
+
+echo "Starting phylogenetic and diversity analysis"
+date
+
 qiime phylogeny align-to-tree-mafft-fasttree \
   --i-sequences rep-seqs.qza \
   --o-alignment aligned-rep-seqs.qza \
@@ -76,6 +113,10 @@ qiime diversity beta-group-significance \
   --m-metadata-column Subject \
   --o-visualization core-metrics-results/unweighted-unifrac-subject-group-significance.qzv \
   --p-pairwise
+
+echo "Making emperor plots"
+date
+
 qiime emperor plot \
   --i-pcoa core-metrics-results/unweighted_unifrac_pcoa_results.qza \
   --m-metadata-file sample-metadata.tsv \
@@ -87,12 +128,20 @@ qiime emperor plot \
   --m-metadata-file sample-metadata.tsv \
   --p-custom-axes DaysSinceExperimentStart \
   --o-visualization core-metrics-results/bray-curtis-emperor-DaysSinceExperimentStart.qzv
+
+echo "Rarefaction analysis"
+date
+
 qiime diversity alpha-rarefaction \
   --i-table table.qza \
   --i-phylogeny rooted-tree.qza \
   --p-max-depth 4000 \
   --m-metadata-file sample-metadata.tsv \
   --o-visualization alpha-rarefaction.qzv
+
+echo "Starting taxonomic classification"
+date
+
 wget \
   -O "gg-13-8-99-515-806-nb-classifier.qza" \
   "https://data.qiime2.org/2018.8/common/gg-13-8-99-515-806-nb-classifier.qza"
@@ -109,6 +158,10 @@ qiime taxa barplot \
   --i-taxonomy taxonomy.qza \
   --m-metadata-file sample-metadata.tsv \
   --o-visualization taxa-bar-plots.qzv
+
+echo "Begin ANCOM analysis"
+date
+
 qiime feature-table filter-samples \
   --i-table table.qza \
   --m-metadata-file sample-metadata.tsv \
@@ -137,4 +190,7 @@ qiime composition ancom \
   --m-metadata-file sample-metadata.tsv \
   --m-metadata-column Subject \
   --o-visualization l6-ancom-Subject.qzv
+
+echo "Complete"
+date
 
